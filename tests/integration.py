@@ -8,17 +8,13 @@ server_host = "192.168.99.100"
 fsp = Framespace(server_host)
 
 print "list keyspaces"
-r = fsp.list_keyspaces()
+r = fsp.search_keyspaces()
 print r.keyspaces[0].keys[:5]
 
 # TODO seems like list_* functions are just duplicating search_* functions
 #      called with no args. The API docs are a little confusing. There are
 #      both GET and POST endpoints for things that should maybe only have GET
 #fsp.search_keyspaces()
-
-print "list axes"
-r = fsp.list_axes()
-print r
 
 print "search axes"
 r = fsp.search_axes()

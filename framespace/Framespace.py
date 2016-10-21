@@ -5,6 +5,11 @@ import requests
 
 import framespace_pb2 as pb
 
+class APIError(Exception):
+    def __init__(self, response):
+        super(APIError, self).__init__()
+        self.response = response
+
 class Dimension:
     def __init__(self, keyspace_id, keys):
         self.keyspace_id = keyspace_id
@@ -20,12 +25,6 @@ class Framespace:
         return "http://{host}:{port}/{endpoint}".format(
             host=self.host, port=self.port, endpoint=endpoint)
 
-    def _get_request(self, endpoint, ResponseType):
-        url = self._get_endpoint_url(endpoint)
-        resp = self.request_lib.get(url)
-        if resp.status_code == 200:
-            return json_format.Parse(resp.content, ResponseType())
-
     def _post_request(self, endpoint, message, ResponseType):
         url = self._get_endpoint_url(endpoint)
         data = json_format.MessageToJson(message)
@@ -33,19 +32,8 @@ class Framespace:
         resp = self.request_lib.post(url, data=data, headers=headers)
         if resp.status_code == 200:
             return json_format.Parse(resp.content, ResponseType())
-
-    def list_keyspaces(self):
-        return self._get_request("keyspaces", pb.SearchKeySpacesResponse)
-
-    def list_axes(self):
-        return self._get_request("axes", pb.SearchAxesResponse)
-
-    # TODO not sure this one makes sense. Kinda just duplicates
-    def list_dataframes(self):
-        return self._get_request("dataframes", pb.SearchDataFramesResponse)
-
-    def list_units(self):
-        return self._get_request("units", pb.SearchUnitsResponse)
+        else:
+            raise APIError(resp)
 
     def search_axes(self, names=[], page_size=0, page_token=""):
         message = pb.SearchAxesRequest()

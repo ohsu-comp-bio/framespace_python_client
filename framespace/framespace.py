@@ -1,36 +1,81 @@
-import json
-import requests
-import jsonmerge
-import numpy
-import pandas
+#import json
+#import requests
+#import jsonmerge
+#import numpy
+#import pandas
 
-def axessearch(host = "192.168.99.100", port = "5000", names = [], pageSize = 0, pageToken = ""):
-  url = 'http://' + host + ':' + port + '/axes/search'
-  searchterm = {"names" : names, "pageSize" : pageSize, "pageToken" : pageToken}
-  response = requests.post(url, json = searchterm)
-  ans = json.loads(response.text)
-  return ans
+import framespace_pb2 as pb
 
-def unitssearch(host = "192.168.99.100", port = "5000", ids = [], names = [], pageSize = 0, pageToken = ""):
-  url = 'http://' + host + ':' + port + '/units/search'
-  searchterm = {"ids" : ids, "names" : names, "pageSize" : pageSize, "pageToken" : pageToken}
-  response = requests.post(url, json = searchterm)
-  ans = json.loads(response.text)
-  return ans
+class Dimension:
+    def __init__(self, keyspace_id, keys):
+        self.keyspace_id = keyspace_id
+        self.keys = keys or []
 
-def keysearch(host = "192.168.99.100", port = "5000", axisNames = ['sample'], keyspaceIds = [], names = [], keys = [], pageSize = 0, pageToken = ""):
-  url = 'http://' + host + ':' + port + '/keyspaces/search'
-  searchterm = {"axisNames" : axisNames, "names" : names, "keys" : keys, "pageSize" : pageSize, "pageToken" : pageToken}
-  response = requests.post(url, json = searchterm)
-  ans = json.loads(response.text)
-  return ans
+class Framespace:
+    def __init__(self, host, port=5000):
+        self.host = host
+        self.port = port
 
-def dfsearch(host = "192.168.99.100", port = "5000", keyspaceIds = ['578fb4336ad2b07cd99ffd4e'], dataframeIds = [], unitIds = [], pageSize = 0, pageToken = ""):
-  url = 'http://' + host + ':' + port + '/dataframes/search'
-  searchterm = {"keyspaceIds" : keyspaceIds, "dataframeIds" : dataframeIds, "unitIds" : unitIds, "pageSize" : pageSize, "pageToken" : pageToken}
-  response = requests.post(url, json = searchterm)
-  ans = json.loads(response.text)
-  return ans
+    def _get_url(self, endpoint):
+        return "http://{host}:{port}/{endpoint}".format(
+            host=self.host, port=self.port, endpoint=endpoint)
+
+    def _make_request(self, endpoint, message):
+        pass
+
+    def search_axes(self, names=[], page_size=0, page_token=""):
+        message = pb.SearchAxesRequest()
+        message.names.extend(names)
+        message.page_size = page_size
+        message.page_token = page_token
+        self._make_request("axes/search", message)
+
+    def search_units(self, ids=[], names=[], page_size=0, page_token=""):
+        message = pb.SearchUnitsRequest()
+        message.ids.extend(ids)
+        message.names.extend(names)
+        message.page_size = page_size
+        message.page_token = page_token
+        self._make_request("units/search", message)
+
+    def search_keyspaces(self, keyspace_ids=[], names=[], axis_names=[], keys=[],
+                         page_size=0, page_token=""):
+        message = pb.SearchKeySpacesRequest()
+        message.keyspace_ids.extend(keyspace_ids)
+        message.names.extend(names)
+        message.axis_names.extend(axis_names)
+        message.keys.extend(keys)
+        message.page_size = page_size
+        message.page_token = page_token
+        self._make_request("keyspaces/search", message)
+
+    def search_dataframes(self, dataframe_ids=[], keyspace_ids=[], unit_ids=[],
+                          page_size=0, page_token=""):
+        message = pb.SearchDataFramesRequest()
+        message.dataframe_ids.extend(dataframe_ids)
+        message.keyspace_ids.extend(keyspace_ids)
+        message.unit_ids.extend(unit_ids)
+        message.page_size = page_size
+        message.page_token = page_token
+        self._make_request("dataframes/search", message)
+
+    def slice_dataframe(self, dataframe_id="", major=None, minor=None,
+                        page_start=0, page_end=0):
+        message = pb.SearchDataFrameRequest()
+
+        if major:
+            message.major.keyspace_id = major.keyspace_id
+            message.major.keys.extend(major.keys)
+
+        if minor:
+            message.minor.keyspace_id = minor.keyspace_id
+            message.minor.keys.extend(minor.keys)
+
+        message.page_start = page_start
+        message.page_end = page_end
+        self._make_request("dataframes/slice", message)
+
+
 
 def dfslice(dataframeId, host = "192.168.99.100", port = "5000", newMajor = None, newMinor = None, pageStart = 0, pageEnd = None):
   url = 'http://' + host + ':' + port + '/dataframe/slice'

@@ -28,32 +28,34 @@ def run_tests():
     fsp = Framespace(SERVER_HOST)
 
     example("Get all keyspaces")
-    output(fsp.search_keyspaces())
+    ks_res = fsp.search_keyspaces()
+    ks_id = ks_res.keyspaces[1].id
+    output(ks_res)
 
-    ksid = "580a440433b0e2aa6b3596d5"
-    example("Search keyspaces by ID = " + ksid)
-    output(fsp.search_keyspaces(keyspace_ids=[ksid]))
+    example("Search keyspaces by ID = " + ks_id)
+    output(fsp.search_keyspaces(keyspace_ids=[ks_id]))
 
     example("Get all axes")
     output(fsp.search_axes())
 
-    ksid = "580a440433b0e2aa6b3596d3"
-    example("List dataframes for keyspace ID = " + ksid)
-    output(fsp.search_dataframes([ksid]))
+    example("List dataframes for keyspace ID = " + ks_id)
+    df_res = fsp.search_dataframes([ks_id])
+    df_id = df_res.dataframes[0].id
+    output(df_res)
 
     example("Get all units")
-    output(fsp.search_units())
+    u_res = fsp.search_units()
+    u_id = u_res.units[0].id
+    output(u_res)
 
     example("Search axes by name = sample")
     output(fsp.search_axes(names=["sample"]))
 
-    uid = "580a442e33b0e2aa6b359726"
-    example("Search units by ID = " + uid)
-    output(fsp.search_units(ids=[uid]))
+    example("Search units by ID = " + u_id)
+    output(fsp.search_units(ids=[u_id]))
 
-    dfid = "57912977105a6c0d293bbe8e"
     example("Slice dataframe")
-    fsp.slice_dataframe(dfid)
+    output(fsp.slice_dataframe(df_id))
 
 
 def example(name):

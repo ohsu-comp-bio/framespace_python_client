@@ -59,7 +59,7 @@ Request messages are encoded using [Protobufs](https://developers.google.com/pro
 Currently there is a very simple test case for request message format.
 Run it from the root of the repo with:
 
-`python -m tests.test_Framespace`
+`python -m unittest tests.test_Framespace`
 
 There are also some simple integration/example tests which require a Framespace API
 server. See [tests/integration.py](tests/integration.py), read the docs there, and run with:

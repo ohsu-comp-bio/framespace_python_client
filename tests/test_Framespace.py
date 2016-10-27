@@ -97,3 +97,7 @@ class TestFramespace(unittest.TestCase):
         with self.assertRaises(TypeError):
             fsp.search_units(ids=[1], names=["foo"], page_size=1, page_token="tk")
         self.assertEqual(self.framespace.request_lib.post_count, 0)
+
+
+if __name__ == '__main__':
+    unittest.main()

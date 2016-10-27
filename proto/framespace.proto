@@ -1,0 +1,146 @@
+syntax = "proto3";
+
+// FrameSpace Service
+//
+// FrameSpace Service API consists of FrameSpace models
+// along with Request and Response objects for endpoints. 
+package framespace;
+
+import "google/protobuf/struct.proto";
+
+
+// Axis represents the top level description of a KeySpace
+// such as Samples, Genomic Labels, Clinical Terms.
+// Note: Experimental measurements are Units, not axes. 
+message Axis {
+  string name = 1;
+  string description = 2;
+}
+
+// SearchAxesRequest is a POST to /axes/search 
+// Search criteria: all axes or search by axis name.
+message SearchAxesRequest {
+  repeated string names = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+// SearchAxesResponse returned from /axes/search
+message SearchAxesResponse {
+  repeated Axis axes = 1;
+  string next_page_token = 2;
+}
+
+// KeySpace is the set of keys that a project has defined, 
+// for a given axis space, Example: (sample1, sample2, sample3).
+// Restrictions on keys can be defined in the metadata field.
+// A key is defined as an entity identifier. 
+message KeySpace {
+  string id = 1;
+  string name = 2;
+  string axis_name = 3;
+  repeated string keys = 4;
+  map<string, string> metadata = 5;
+}
+
+// SearchKeySpacesRequest is a POST to /keyspaces/search 
+// Search criteria: search by keyspace name/id, axis name, and keys.
+// An axis name is required in the request.
+message SearchKeySpacesRequest {
+  repeated string keyspace_ids = 1;
+  repeated string names = 2;
+  repeated string axis_names = 3;
+  repeated string keys = 4;
+  int32 page_size = 5;
+  string page_token = 6;
+}
+
+// SearchKeySpacesResponse returned from /keyspaces/search
+message SearchKeySpacesResponse {
+  repeated KeySpace keyspaces = 1;
+  string next_page_token = 2;
+}
+
+// Dimension is a subset of keys from a KeySpace.
+// Actual subset is defined by the keys list. 
+// A key in a dimension must belong to the keyspace identifed by id.
+message Dimension {
+  string keyspace_id = 1;
+  repeated string keys = 2;
+}
+
+// Unit is a basic message enforcing a label naming the measurement,
+// a description to identify specific info about this measurement.
+// Units have ids because unit names can be arbitary.
+message Unit {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+// SearchUnitsRequest is a POST to /units/search
+// Search for available units of measurement.
+// Search criteria: all units, filter by unit id/name.
+message SearchUnitsRequest {
+  repeated string ids = 1;
+  repeated string names = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+// SearchUnitsResponse is returned from /units/search
+message SearchUnitsResponse {
+  repeated Unit units = 1;
+  string next_page_token = 2;
+}
+
+// Dataframe consists of two dimensions. 
+// units is a flag specifying the value of a cell.
+// Any restrictions on units should be defined in metadata.
+// The order of heterogenous vectors should correspond to order of
+// units in Unit list.
+// The struct object is protos equivalent of a python dict:
+// dataframe.contents[contents_key][struct_key] = struct_value
+// ie. {'geneA': {'sample1': 0}}, would be populated as
+// dataframe.contents['geneA']['sample1'] = 0
+message DataFrame {
+  string id = 1;
+  Dimension major = 2;
+  Dimension minor = 3;
+  repeated Unit units = 4;
+  map<string, string> metadata = 5;
+  map<string, google.protobuf.Struct> contents = 6;
+}
+
+// DataFramesRequest is a POST to /dataframes/search 
+// Search criteria: search for dataframes from a given keyspace(s), 
+// filter by dataframe ids, and unit ids. At least one keyspaceId required.
+message SearchDataFramesRequest {
+  repeated string dataframe_ids = 1;
+  repeated string keyspace_ids = 2;
+  repeated string unit_ids = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+}
+
+// SearchDataFramesResponse is returned from /dataframes/search
+// By default, the vector contents of a search dataframes response
+// are not returned. The contents should be returned from a dataframe slice.
+message SearchDataFramesResponse {
+  repeated DataFrame dataframes = 1;
+  string next_page_token = 2;
+}
+
+// SliceDataFrameRequest is a POST to /dataframe/slice 
+// Given an id return a slice based on the following dimensions.
+// Client creates a list of keys as a new dimension, if desired.
+// Subsetting / pagination can be performed by page_start and page_end.
+message SliceDataFrameRequest {
+  string dataframe_id = 1;
+  Dimension new_major = 2;
+  Dimension new_minor = 3;
+  int32 page_start = 4;
+  int32 page_end = 5;
+}
+
+// CreateDataFrameRequest is a POST to a /dataframe/

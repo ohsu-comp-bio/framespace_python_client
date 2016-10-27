@@ -5,12 +5,27 @@ import requests
 import framespace.framespace_pb2 as pb
 
 
-class ApiError(Exception):
+class ServerException(Exception):
     def __init__(self, response):
-        msg = "{msg}\n\nTrackback from server:\n{tb}".format(
-            msg=response["message"], tb=response["traceback"])
-        super(ApiError, self).__init__(msg)
+
+        # Format the error message. If there's a traceback included in the response,
+        # use that (when server has debug mode enabled).
+        data = response.json()
+        traceback = data.get("traceback")
+        if traceback:
+            message = "\nTraceback from server:\n" + "".join(traceback[1:])
+        else:
+            message = data.get("message", "Unknown error")
+
+        msg = "HTTP status {code}:\n{message}".format(
+            code=response.status_code,
+            message=message
+        )
+
+        # Initialize the exception fields
+        super(ServerException, self).__init__(msg)
         self.response = response
+
 
 class ProtobufRequests(object):
     def __init__(self, host):
@@ -24,12 +39,14 @@ class ProtobufRequests(object):
         if resp.status_code == 200:
             return json_format.Parse(resp.content, ResponseType())
         else:
-            raise ApiError(resp.json())
+            raise ServerException(resp)
+
 
 class Dimension(object):
     def __init__(self, keyspace_id, keys):
         self.keyspace_id = keyspace_id
         self.keys = keys or []
+
 
 class Framespace(object):
     def __init__(self, host):

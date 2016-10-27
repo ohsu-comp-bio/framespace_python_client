@@ -1,50 +1,76 @@
+"""
+This is a runnable script which provides some rough integration testing
+and examples for how the client is used.
+
+Run this from the repo root with `python -m tests.integration`
+
+This requires a framespace server to be running.
+See github.com/ohsu-computational-biology/framespace-ref
+If you have Docker engine/machine/compose, it's pretty easy to set up by following
+the instructions there. A few of the examples here expect the test data from
+that repo, but that's easy enough to change if needed.
+
+You might need to override the SERVER_HOST variable. If you're using Docker
+locally, you can get the IP by running `docker-machine ip default`.
+"""
+from __future__ import print_function
+
+import google.protobuf.text_format as text_format
+
 from framespace import Framespace
 
-# The server code is at github.com/ohsu-computational-biology/framespace-ref
-# The docs describe how to run a server easily via Docker
-# Get the host IP with `docker-machine ip default`
-# TODO get this via CLI config, or just run the docker-machine command
-server_host = "192.168.99.100"
-fsp = Framespace(server_host)
+TRUNCATE_OUTPUT = True
+# This is the IP/host of the framespace server
+SERVER_HOST = "http://192.168.99.100:5000"
+    
 
-print "list keyspaces"
-r = fsp.search_keyspaces()
-print r.keyspaces[0].keys[:5]
+def run_tests():
+    fsp = Framespace(SERVER_HOST)
 
-# TODO seems like list_* functions are just duplicating search_* functions
-#      called with no args. The API docs are a little confusing. There are
-#      both GET and POST endpoints for things that should maybe only have GET
-#fsp.search_keyspaces()
+    example("Get all keyspaces")
+    output(fsp.search_keyspaces())
 
-print "search axes"
-r = fsp.search_axes()
-print r
+    ksid = "580a440433b0e2aa6b3596d5"
+    example("Search keyspaces by ID = " + ksid)
+    output(fsp.search_keyspaces(keyspace_ids=[ksid]))
 
-print "list dataframes"
-r = fsp.list_dataframes()
-print r
+    example("Get all axes")
+    output(fsp.search_axes())
 
-print "list units"
-r = fsp.list_units()
-print r
+    ksid = "580a440433b0e2aa6b3596d3"
+    example("List dataframes for keyspace ID = " + ksid)
+    output(fsp.search_dataframes([ksid]))
 
-r = fsp.search_axes(names=["sample"])
-print r
+    example("Get all units")
+    output(fsp.search_units())
 
-r = fsp.search_units()
-print r
+    example("Search axes by name = sample")
+    output(fsp.search_axes(names=["sample"]))
 
-r = fsp.search_units(ids=["580a442e33b0e2aa6b359726"])
-print r
+    uid = "580a442e33b0e2aa6b359726"
+    example("Search units by ID = " + uid)
+    output(fsp.search_units(ids=[uid]))
 
-# TODO fails hard. keyspace_ids is required param?
-# TODO server needs is returning code 200 on error. Should be 500 or consistent
-#      error code field should be on response
-#r = fsp.search_keyspaces()
-#print r
+    dfid = "57912977105a6c0d293bbe8e"
+    example("Slice dataframe")
+    fsp.slice_dataframe(dfid)
 
-r = fsp.search_keyspaces(keyspace_ids=["1"])
-print r
 
-r = fsp.search_dataframes(["1"])
-print r
+def example(name):
+    "Helper for printing out the example name."
+    bar = "=" * 50
+    print("\n".join(["", bar, name, bar]))
+
+def output(obj):
+    "Helper for printing out the response messages in manageable sizes."
+    out = text_format.MessageToString(obj)
+    lines = out.split("\n")
+    if TRUNCATE_OUTPUT and len(lines) > 10:
+        print("\n".join(lines[0:10]))
+        print("...output truncated...")
+    else:
+        print(out)
+
+
+if __name__ == "__main__":
+    run_tests()

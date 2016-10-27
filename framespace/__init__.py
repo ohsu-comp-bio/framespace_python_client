@@ -1,1 +1,1 @@
-from Framespace import Framespace, Dimension
+from framespace.Framespace import Framespace, Dimension
